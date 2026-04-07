@@ -1,0 +1,28 @@
+idea:
+  title: Adversarial Prompts as Firewalls
+  domain: nlp
+  hypothesis: 'Inserting an adversarial prompt immediately after sensitive information
+    in the system prompt can reduce the likelihood that large language models will
+    leak that information, unless it is accessed with an exact match or highly specific
+    query.
+
+    '
+  background:
+    description: 'LLMs are currently unable to compartmentalize information given
+      in system prompts or user messages, often leaking it when generating open-ended
+      text. While long-term solutions may require true compartmentalization, this
+      idea proposes a near-term mitigation: placing an adversarial prompt after sensitive
+      information in the system prompt, so that the information is only attended to
+      in cases of near-exact match. This approach may not prevent subtle leaks, but
+      LLMs already struggle with such cases.
+
+      '
+  metadata:
+    author: Ari Holtzman
+    source: IdeaHub
+    source_url: https://hypogenic.ai/ideahub/idea/A15EmBF2vYd2RgpICBkU
+    idea_id: adversarial_prompts_as_firewal_20260407_032320_2b139c35
+    created_at: '2026-04-07T03:23:20.363876'
+    status: submitted
+    github_repo_name: adv-prompts-firewalls-claude
+    github_repo_url: https://github.com/Hypogenic-AI/adv-prompts-firewalls-claude

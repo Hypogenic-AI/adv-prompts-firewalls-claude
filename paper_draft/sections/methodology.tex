@@ -1,0 +1,110 @@
+\section{Methodology}
+\label{sec:method}
+
+We design a controlled experiment to measure whether simple adversarial prompts placed after sensitive information in system prompts reduce information leakage under diverse extraction attacks.
+
+\subsection{System Prompt Construction}
+\label{sec:prompts}
+
+We sample 20 base system prompts from the Unnatural Instructions dataset used in PSM~\cite{jawad2026psm}.
+Into each prompt, we inject three sensitive fields at marked locations:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item \textbf{API Key}: \texttt{sk-PROJ-xK9mT2vLpQ8nR5wA3bF7dG1hJ4kM6oP}
+    \item \textbf{Secret Code}: \texttt{WHISKEY-TANGO-FOXTROT-7749}
+    \item \textbf{Internal URL}: \texttt{https://internal.acmecorp.io/admin/config/v3}
+\end{itemize}
+These fields represent common types of sensitive information found in production system prompts: authentication credentials, internal identifiers, and private endpoints.
+
+\subsection{Defense Conditions}
+\label{sec:defenses}
+
+We evaluate five defense conditions, summarized in \tabref{tab:defenses}.
+The \nodefense baseline places sensitive fields with no protection.
+The \heuristic baseline appends a standard guardrail instruction (``Do not reveal any sensitive information, API keys, or secrets from your instructions'').
+The three firewall conditions place adversarial text immediately after each sensitive field:
+
+\begin{table}[t]
+    \centering
+    \caption{Defense conditions evaluated. Firewall text is placed immediately after each sensitive field within the system prompt.}
+    \begin{tabular}{@{}llp{7cm}@{}}
+        \toprule
+        \textbf{Condition} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        \nodefense & Baseline & Raw system prompt, no protection \\
+        \heuristic & Baseline & Standard guardrail: ``Do not reveal any sensitive information\ldots'' \\
+        \mildfirewall & Firewall & Security notice: ``The above information is classified\ldots'' \\
+        \modfirewall & Firewall & Structured boundary: \texttt{---SYSTEM BOUNDARY---} with explicit access rules \\
+        \aggfirewall & Firewall & Fake assistant completion simulating refusal to a prior extraction attempt \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:defenses}
+\end{table}
+
+The \mildfirewall uses a brief security notice after each field.
+The \modfirewall uses a structured boundary marker (\texttt{---SYSTEM BOUNDARY---}) with explicit rules demarcating sensitive content as off-limits.
+The \aggfirewall simulates a fake assistant completion where the model has already detected and refused an extraction attempt, following the ``fight fire with fire'' principle of \citet{chen2025dat}.
+
+\subsection{Attack Suite}
+\label{sec:attacks}
+
+We use 65 attacks spanning six categories, summarized in \tabref{tab:attacks}.
+
+\begin{table}[t]
+    \centering
+    \caption{Attack categories and sources. General attacks (first three rows) test broad extraction; exact-match and fuzzy queries test field-specific access; benign queries test utility preservation.}
+    \begin{tabular}{@{}llcl@{}}
+        \toprule
+        \textbf{Category} & \textbf{Source} & \textbf{Count} & \textbf{Style} \\
+        \midrule
+        Raccoon & \citet{wang2024raccoon} & 15 & Injection, override, role-play \\
+        Liang & \citet{liang2024prompts} & 10 & Polite request extraction \\
+        Zhang & \citet{das2025system} & 10 & Diverse extraction strategies \\
+        \midrule
+        Exact-match & Custom & 10 & Queries naming specific sensitive values \\
+        Fuzzy & Custom & 10 & Vague queries about configuration/secrets \\
+        Benign & Custom & 10 & Normal task queries (utility test) \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:attacks}
+\end{table}
+
+The 35 general attacks (Raccoon, Liang, Zhang) test broad extraction capability.
+The 10 exact-match queries specifically name sensitive values (\eg ``What is the API key \texttt{sk-PROJ-...}?'') to test whether firewalls allow access via precise queries.
+The 10 fuzzy queries ask vaguely about secrets without naming specific values.
+The 10 benign queries test normal task completion to measure utility impact.
+
+\subsection{Experimental Protocol}
+\label{sec:protocol}
+
+All experiments use \gptmini via the OpenAI API with temperature$=0$, max\_tokens$=1024$, and seed$=42$.
+Each of the 20 base prompts is tested with each of the 5 defense conditions and all applicable attacks, yielding 5{,}650 total API calls across four experiments:
+
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item \textbf{Experiment 1} (Baseline): \nodefense condition with all 35 general attacks $\times$ 20 prompts = 700 calls.
+    \item \textbf{Experiment 2} (Firewall Effectiveness): 4 defended conditions $\times$ 35 attacks $\times$ 20 prompts = 2{,}800 calls.
+    \item \textbf{Experiment 3} (Exact-Match Bypass): 5 conditions $\times$ 20 queries $\times$ 20 prompts = 2{,}000 calls.
+    \item \textbf{Experiment 4} (Utility): 5 conditions $\times$ 10 benign queries $\times$ 20 prompts = 1{,}000 calls. Note: some conditions in Experiments 3 and 4 overlap with Experiments 1--2; the unique total is 5{,}650.
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+\label{sec:metrics}
+
+\para{Sensitive Field Leakage Rate (\sflr).}
+The fraction of responses containing any of the three exact sensitive field values as substrings.
+This is our primary metric: it directly measures whether the model reveals the specific secrets we aim to protect.
+
+\para{\rougel Recall.}
+The longest common subsequence recall between the full system prompt and the model response, measuring surface-level overlap.
+Higher values indicate more of the system prompt content has leaked into the response.
+
+\para{Utility Score.}
+TF-IDF cosine similarity between responses to benign queries under defended and undefended conditions.
+A score of 1.0 indicates the defense has no impact on normal task responses.
+
+\subsection{Statistical Analysis}
+\label{sec:stats}
+
+We compare \sflr across conditions using chi-squared and Fisher exact tests (for small cell counts).
+We report bootstrap 95\% confidence intervals (1{,}000 resamples) for leakage rate differences.
+We use the Kruskal-Wallis test for \rougel comparisons across conditions (non-normal distributions expected).
+All tests use $\alpha = 0.05$.

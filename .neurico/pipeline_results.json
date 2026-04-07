@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "stages": {
+    "resource_finder": {
+      "success": true,
+      "completion_marker": "/workspaces/adv-prompts-firewalls-claude/.resource_finder_complete",
+      "outputs": {
+        "literature_review": "/workspaces/adv-prompts-firewalls-claude/literature_review.md",
+        "resources_catalog": "/workspaces/adv-prompts-firewalls-claude/resources.md",
+        "papers_dir": "/workspaces/adv-prompts-firewalls-claude/papers",
+        "datasets_dir": "/workspaces/adv-prompts-firewalls-claude/datasets",
+        "code_dir": "/workspaces/adv-prompts-firewalls-claude/code"
+      },
+      "log_file": "/workspaces/adv-prompts-firewalls-claude/logs/resource_finder_claude.log",
+      "transcript_file": "/workspaces/adv-prompts-firewalls-claude/logs/resource_finder_claude_transcript.jsonl",
+      "elapsed_time": 1416.780356168747
+    },
+    "experiment_runner": {
+      "success": true,
+      "return_code": 0,
+      "elapsed_time": 942.5004646778107,
+      "log_file": "/workspaces/adv-prompts-firewalls-claude/logs/execution_claude.log",
+      "transcript_file": "/workspaces/adv-prompts-firewalls-claude/logs/execution_claude_transcript.jsonl"
+    }
+  },
+  "work_dir": "/workspaces/adv-prompts-firewalls-claude"
+}

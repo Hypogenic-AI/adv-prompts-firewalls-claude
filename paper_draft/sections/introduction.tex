@@ -1,0 +1,33 @@
+\section{Introduction}
+\label{sec:intro}
+
+Deployed LLM applications routinely place sensitive information in system prompts: API keys, internal URLs, proprietary configurations, and business logic.
+Unlike traditional software, where secrets can be isolated in environment variables or vaults, LLMs have no mechanism to compartmentalize information within their context window.
+Every token in the system prompt is, in principle, accessible to any sufficiently clever user query.
+This creates a fundamental security gap: the very information that configures an LLM application is also the information most vulnerable to extraction~\cite{agarwal2024prompt,das2025system,wang2024raccoon}.
+
+A growing body of work addresses this vulnerability through \emph{optimized} adversarial defenses.
+Prompt Sensitivity Minimization~\cite{jawad2026psm} uses an LLM-as-optimizer loop to iteratively generate protective suffixes, reducing attack success rates to near-zero.
+Defensive Prompt Patch~\cite{xiong2025dpp} evolves human-readable suffixes via hierarchical genetic algorithms.
+Robust Prompt Optimization~\cite{zhou2024rpo} frames defense as minimax optimization over adversarial token sequences.
+These approaches are effective but carry significant overhead: they require model-specific optimization, iterative refinement, and computational budgets that may be impractical for many deployments.
+
+{\bf Can simple, handcrafted adversarial prompts provide meaningful protection?}
+We test this question directly.
+Rather than optimizing defensive text through expensive search procedures, we design three handcrafted adversarial ``firewalls'' of increasing strength---a security notice, a structured boundary marker, and a fake assistant completion---and place them immediately after sensitive fields within system prompts.
+This placement exploits the well-documented recency bias in LLMs~\cite{liang2024prompts,chen2025dat}: models prioritize recent instructions, so a defensive prompt positioned after sensitive content can override extraction attempts that target that content.
+
+We evaluate these firewalls on \gptmini across 65 diverse extraction attacks drawn from \raccoon~\cite{wang2024raccoon}, \citet{liang2024prompts}, and \citet{das2025system}, using 20 system prompts with three injected sensitive fields each.
+Our best design---a structured boundary marker (\modfirewall)---reduces exact sensitive field leakage from 15.3\% to 6.4\%, a 58\% reduction ($p < 10^{-7}$) that matches the standard heuristic guardrail baseline.
+The aggressive firewall (fake completion) also achieves significant protection (43\% reduction, $p < 10^{-3}$).
+
+We also test an intriguing hypothesis: that firewalls might create \emph{selective permeability}, blocking general extraction while allowing access via exact-match queries that name specific sensitive values.
+This hypothesis is partially refuted---firewalls suppress leakage broadly across query types, reducing exact-match leakage from 23\% to 0.5--4\% rather than preserving access for specific queries.
+
+Our contributions are:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We propose and evaluate \emph{adversarial firewall prompts}: simple, handcrafted adversarial text placed after sensitive fields in system prompts, achieving up to 58\% leakage reduction without optimization or training.
+    \item We conduct a controlled study across five defense conditions, six attack categories, and 5{,}650 total API calls, providing the first systematic comparison of handcrafted adversarial defenses for field-level protection within system prompts.
+    \item We test and partially refute the selective permeability hypothesis, showing that adversarial firewalls suppress leakage broadly rather than creating query-type-dependent access control.
+    \item We identify that injection-style attacks (\raccoon) account for nearly all successful extractions on \gptmini, while polite-request and diverse-strategy attacks produce near-zero leakage even without defenses.
+\end{itemize}

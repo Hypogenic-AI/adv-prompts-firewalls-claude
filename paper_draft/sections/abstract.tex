@@ -1,0 +1,8 @@
+Large language models (LLMs) deployed with system prompts cannot compartmentalize sensitive information---any data placed in the prompt is vulnerable to extraction via adversarial user queries.
+Prior defenses rely on expensive optimization loops or model fine-tuning to generate protective suffixes.
+We ask whether simple, handcrafted adversarial prompts placed immediately after sensitive fields can serve as practical ``firewalls'' that reduce information leakage without optimization or training.
+We evaluate three firewall designs of increasing strength---a security notice, a structured boundary marker, and a fake assistant completion---against 65 extraction attacks drawn from \raccoon and other benchmarks, across 20 system prompts with injected sensitive fields (API keys, secret codes, internal URLs) on \gptmini.
+Our best design, a structured boundary marker (\modfirewall), reduces exact sensitive field leakage from 15.3\% to 6.4\% ($p < 10^{-7}$), a 58\% reduction that matches the effectiveness of standard heuristic guardrails.
+Contrary to our initial hypothesis, firewalls do not create selective permeability: they suppress leakage for both exact-match and fuzzy queries, rather than allowing access via specific queries while blocking general extraction.
+We find that all three sensitive field types leak at identical rates, that injection-style attacks account for nearly all successful extractions, and that firewalls preserve normal model utility with zero leakage on benign queries.
+These results demonstrate that zero-cost, training-free adversarial firewalls provide meaningful protection for sensitive fields in system prompts, offering a complementary defense layer deployable immediately in production systems.

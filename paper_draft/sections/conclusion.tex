@@ -1,0 +1,14 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We evaluate whether simple, handcrafted adversarial prompts placed after sensitive information in LLM system prompts can reduce information leakage.
+Across 5{,}650 API calls on \gptmini with 65 diverse extraction attacks, we find that our best design---a structured boundary marker (\modfirewall)---reduces exact sensitive field leakage by 58\% (from 15.3\% to 6.4\%, $p < 10^{-7}$), matching the effectiveness of standard heuristic guardrails without any optimization or training.
+Two of three firewall designs achieve statistically significant protection.
+
+Contrary to our initial hypothesis, firewalls do not create selective permeability: they broadly suppress leakage for both exact-match and fuzzy queries rather than allowing query-type-dependent access control.
+We also find that injection-style attacks account for nearly all successful extractions on \gptmini, while polite-request attacks produce near-zero leakage even without defenses.
+
+Our key takeaway is that even zero-cost, handcrafted adversarial firewalls provide meaningful security improvements for deployed LLM applications, offering a practical first line of defense that can be combined with more sophisticated protections.
+
+Future work should extend this evaluation to multiple models (Claude, Llama-3, Gemini), test against adaptive adversaries that specifically target the firewall mechanism, evaluate multi-turn attack escalation, and explore LLM-optimized firewalls that build on the handcrafted designs as starting points.
+Mechanistic analysis on open-source models---examining how firewall text affects attention patterns to sensitive tokens---could provide deeper understanding of why these simple defenses work and how to make them more robust.

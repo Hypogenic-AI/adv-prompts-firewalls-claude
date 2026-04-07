@@ -1,0 +1,92 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Hypothesis Testing Summary}
+
+\Tabref{tab:hypotheses} summarizes the status of our four hypotheses.
+
+\begin{table}[t]
+    \centering
+    \caption{Summary of hypothesis testing outcomes.}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{Hypothesis} & \textbf{Result} & \textbf{Key Evidence} \\
+        \midrule
+        H1: Firewalls reduce general leakage & Supported & 15.3\% $\to$ 6.4\%, $p < 10^{-7}$ \\
+        H2: Exact-match queries bypass firewalls & Partially refuted & Both query types suppressed \\
+        H3: Simple handcrafted firewalls help & Supported & 2 of 3 designs at $p < 0.001$ \\
+        H4: Utility preserved & Partially supported & 0\% benign leakage; similarity $\approx 0.7$ \\
+        \bottomrule
+    \end{tabular}
+    \label{tab:hypotheses}
+\end{table}
+
+\subsection{Why the Moderate Firewall Works Best}
+
+The \modfirewall uses structured boundary markers (\texttt{---SYSTEM BOUNDARY---}) that create an explicit separation between sensitive and non-sensitive content.
+We hypothesize this exploits the model's instruction-following ability: the boundary language signals that preceding content is ``off-limits'' in a clear, unambiguous way that aligns with patterns seen during instruction tuning.
+The \aggfirewall is also effective but slightly weaker, possibly because its conversational format (a simulated assistant turn) is more easily overridden by injection attacks that also manipulate turn structure.
+The \mildfirewall's weaker performance suggests that a brief security notice lacks sufficient structural salience to override adversarial instructions.
+
+\subsection{Why Selective Permeability Failed}
+
+Our initial hypothesis predicted that firewalls would allow exact-match access while blocking fuzzy queries.
+The data tell a different story.
+Without any defense, \gptmini already handles fuzzy extraction well (0\% leakage even with \nodefense), and exact-match queries are the only query type that succeeds.
+Firewalls then suppress this remaining exact-match leakage, producing a broadly protective effect rather than a selective one.
+
+This suggests three things: (1) the model's safety training already handles vague extraction attempts, (2) firewalls primarily protect against the attack modalities that safety training misses (injection-style override), and (3) true selective permeability---allowing access for authorized queries while blocking unauthorized ones---would require a more sophisticated mechanism than text-based prompts, likely involving retrieval-augmented access control or fine-tuned permission systems.
+
+\subsection{Comparison to Prior Work}
+
+\para{Optimized shields.}
+\citet{jawad2026psm} achieve 0--6\% attack success with optimized shields.
+Our best handcrafted firewall achieves 6.43\%, falling at the upper bound of their range but without any optimization cost.
+This suggests that much of the benefit of adversarial defenses comes from the \emph{structural placement} after sensitive content rather than from the specific optimized wording.
+
+\para{Training-free defenses.}
+\citet{chen2025dat} achieve near-0\% success with their Fakecom-t defense, which is similar in design to our \aggfirewall.
+Our higher residual leakage (8.71\%) may reflect differences in evaluation protocol---they test indirect injection rather than system prompt extraction---or the fact that our firewall text is simpler than their optimized template.
+
+\para{Baseline threat level.}
+\citet{agarwal2024prompt} find a baseline attack success rate of approximately 17.7\% on turn one for closed-source models.
+Our 15.3\% undefended leakage rate on \gptmini is consistent with this finding, suggesting our threat model is realistic.
+
+\subsection{Practical Recommendations}
+
+Based on our findings, we offer four recommendations for practitioners deploying LLMs with sensitive information in system prompts:
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=2pt]
+    \item \textbf{Use structured boundary markers} (\modfirewall style) for best protection at zero optimization cost. The explicit structural separation is more effective than security notices or fake completions.
+    \item \textbf{Combine with heuristic guardrails} for defense-in-depth. Our \modfirewall and \heuristic achieve similar leakage rates through potentially complementary mechanisms.
+    \item \textbf{Place firewalls immediately after sensitive fields}, not only at the end of the system prompt. Field-level protection provides targeted defense where it is needed.
+    \item \textbf{Do not rely on firewalls alone} for high-security applications. Even with the \modfirewall, 6.4\% of general attacks succeed, and adaptive adversaries could likely develop targeted bypasses.
+\end{enumerate}
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+\para{Single model.}
+We test only on \gptmini.
+Results may differ substantially on other models, particularly open-source models that tend to be more vulnerable to extraction attacks~\cite{agarwal2024prompt,das2025system}.
+
+\para{Static attacks only.}
+Our evaluation uses a fixed attack suite and does not include adaptive adversaries that specifically target the firewall mechanism.
+Per \citet{tramer2025attacker}, any defense evaluated only against non-adaptive attacks is likely to overestimate its robustness.
+Future work should include automated red-teaming with GCG~\cite{zou2023universal} and AutoDAN specifically targeting the firewall text.
+
+\para{No multi-turn evaluation.}
+\citet{agarwal2024prompt} show that multi-turn sycophancy attacks reach 86\%+ success rates.
+Our single-turn evaluation does not capture this escalation dynamic, which could significantly reduce firewall effectiveness over extended conversations.
+
+\para{Synthetic sensitive fields.}
+We use synthetic API keys, codes, and URLs.
+Real-world sensitive information may have different leakage patterns depending on how closely it resembles training data.
+
+\para{Utility metric coarseness.}
+TF-IDF cosine similarity is a crude measure of utility preservation.
+Sentence-embedding similarity or LLM-as-judge evaluation would provide more precise measurements of whether firewall prompts degrade response quality.
+
+\para{Sample size.}
+With 20 base prompts and 35 attacks per condition, our study has 700 trials per condition for general attacks.
+While sufficient for detecting large effects, finer-grained subgroup analyses (\eg per-attack-type within Raccoon) have limited statistical power.

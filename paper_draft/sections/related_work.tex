@@ -1,0 +1,38 @@
+\section{Related Work}
+\label{sec:related}
+
+\para{Prompt extraction attacks.}
+System prompt extraction has emerged as a significant threat to deployed LLM applications.
+\citet{wang2024raccoon} introduce the \raccoon benchmark with 14 categories of extraction attacks, including instruction override, role-play, and compositional strategies, finding universal susceptibility across models without defenses.
+\citet{liang2024prompts} analyze the memorization mechanisms underlying prompt leakage, proposing perplexity-based and attention-based explanations for why prompts are extractable.
+\citet{das2025system} demonstrate that chain-of-thought prompting and few-shot attacks achieve near-perfect extraction rates (99\% on Llama-3, 98.5\% on GPT-4) on undefended prompts.
+\citet{agarwal2024prompt} show that multi-turn sycophancy attacks escalate leakage from 17.7\% at turn one to 86.2\% at turn two, even on closed-source models.
+\citet{toyer2023tensor} collect over 126K human-generated extraction attacks through an adversarial game, providing a large-scale dataset of real attack strategies.
+Our work complements these threat analyses by evaluating whether simple adversarial defenses can reduce the leakage rates these attacks exploit.
+
+\para{Optimized adversarial defenses.}
+Several recent works use optimization to generate defensive prompts.
+\citet{jawad2026psm} formalize shield appending as a utility-constrained optimization problem, using an LLM-as-optimizer to iteratively refine protective suffixes that reduce attack success rates to 0--6\%.
+\citet{xiong2025dpp} evolve human-readable suffix patches via hierarchical genetic algorithms, achieving 3.8\% attack success with 83\% utility preservation on Llama-2.
+\citet{zhou2024rpo} introduce minimax optimization for defensive 20-token suffixes, reducing GCG attack success to 0\% with strong cross-model transfer.
+\citet{mo2024fight} use adversarial tuning of prompt tokens as a direct defense against jailbreaks.
+Unlike these approaches, we test whether \emph{handcrafted} adversarial prompts---requiring no optimization loop, no gradient access, and no iterative refinement---can provide meaningful protection, trading optimality for immediate deployability.
+
+\para{Training-free defenses.}
+\citet{chen2025dat} demonstrate that attack techniques can be inverted into defenses, showing that a ``fake completion'' prompt (simulating an assistant detecting an attack) reduces indirect injection success to 0.05\%.
+This work is closest to our aggressive firewall design.
+\citet{agarwal2024prompt} evaluate seven black-box defenses including instruction defense, query rewriting, and sandwich defense, finding that combinations reduce leakage to 0\% at turn one for closed-source models.
+Our work differs in three ways: (1) we focus on protecting specific sensitive \emph{fields} within a prompt rather than the entire prompt, (2) we test whether exact-match queries can bypass defenses (selective permeability), and (3) we systematically compare three handcrafted firewall designs of increasing aggressiveness.
+
+\para{Placement and recency bias.}
+The effectiveness of suffix-positioned defenses is grounded in the recency bias of autoregressive language models: tokens closer to the generation boundary exert greater influence on outputs.
+\citet{jawad2026psm} exploit this by placing shields after system prompts.
+\citet{xiong2025dpp} show that suffix placement outperforms prefix by 42\% under adaptive attacks.
+The continuous-token approach of \citet{yuan2025defensive} finds that start placement preserves utility while end placement destroys it, but this holds only for non-linguistic embeddings---for natural language defenses like ours, suffix placement remains optimal.
+We extend this line of work by testing placement immediately \emph{after specific sensitive fields} rather than at the end of the entire prompt.
+
+\para{Adaptive attacks.}
+\citet{tramer2025attacker} argue that defenses must be evaluated against adaptive adversaries who specifically target the defense mechanism, showing that sandwich defenses, StruQ, and spotlighting can all be bypassed with targeted strategies.
+\citet{zou2023universal} introduce Greedy Coordinate Gradient (GCG) for generating transferable adversarial suffixes.
+We acknowledge this limitation: our evaluation uses static attacks and does not include adversaries that specifically target the firewall text.
+We discuss this constraint in \secref{sec:discussion} and propose adaptive attack evaluation as critical future work.
